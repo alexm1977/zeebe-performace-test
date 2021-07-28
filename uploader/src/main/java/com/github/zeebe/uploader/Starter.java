@@ -15,8 +15,10 @@
  */
 package com.github.zeebe.uploader;
 
+import com.fasterxml.jackson.databind.*;
 import com.github.zeebe.uploader.config.AppCfg;
 import io.zeebe.client.ZeebeClient;
+import java.util.UUID;
 import java.util.concurrent.*;
 import lombok.extern.slf4j.Slf4j;
 
@@ -24,6 +26,10 @@ import lombok.extern.slf4j.Slf4j;
 public class Starter extends App {
 
   private final AppCfg appCfg;
+  private final ObjectMapper objectMapper =
+      new ObjectMapper()
+          .enable(SerializationFeature.INDENT_OUTPUT)
+          .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
 
   Starter(AppCfg appCfg) {
     this.appCfg = appCfg;
@@ -32,22 +38,28 @@ public class Starter extends App {
   @Override
   public void run() {
     final int rate = 50;
-    final String processId = "perf_test";
+    final String processId = "perf_test_1";
     final ZeebeClient client = createZeebeClient();
-
+    log.info("Start . . .");
     printTopology(client);
-
+    log.info("Create scheduler");
     final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
 
     deployWorkflow(client, "bpmn/tst_perf.bpmn");
-
+    log.info("Start workflow ...");
     // start instances
     final int intervalMs = Math.floorDiv(1000, rate);
     log.info("Creating an instance every {}ms", intervalMs);
     executorService.scheduleAtFixedRate(
         () -> {
           try {
-            client.newCreateInstanceCommand().bpmnProcessId(processId).latestVersion().send();
+            var id = new ContextVariables(UUID.randomUUID().toString());
+            client
+                .newCreateInstanceCommand()
+                .bpmnProcessId(processId)
+                .latestVersion()
+                .variables(id)
+                .send();
           } catch (Exception e) {
             e.printStackTrace();
           }
@@ -81,7 +93,11 @@ public class Starter extends App {
   private void deployWorkflow(ZeebeClient client, String bpmnXmlPath) {
     while (true) {
       try {
-        client.newDeployCommand().addResourceFromClasspath(bpmnXmlPath).send().join();
+        log.info("Try to deploy...");
+        var res = client.newDeployCommand().addResourceFromClasspath(bpmnXmlPath).send().join();
+
+        log.info("deployment info: {}", objectMapper.writeValueAsString(res));
+
         break;
       } catch (Exception e) {
         log.warn("Failed to deploy workflow, retrying", e);

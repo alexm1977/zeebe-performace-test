@@ -13,21 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.zeebe.worker;
+package com.github.zeebe.worker.services;
 
 import com.github.zeebe.worker.config.AppCfg;
 import io.zeebe.client.api.response.ActivatedJob;
 import io.zeebe.client.api.worker.JobClient;
-import lombok.Getter;
 
-public final class Service_4 extends AbstractService {
+public final class Service_3 extends AbstractService {
 
   static final long completionDelay = 300;
 
-  @Getter public final String jobType = "tst_service_4";
-  @Getter public final Integer numThread = 3;
-
-  protected Service_4(AppCfg appCfg) {
+  public Service_3(AppCfg appCfg) {
     super(appCfg);
   }
 
@@ -40,5 +36,15 @@ public final class Service_4 extends AbstractService {
     }
 
     jobClient.newCompleteCommand(job.getKey()).variables(job.getVariables()).send();
+  }
+
+  @Override
+  public Integer getNumThread() {
+    return 3;
+  }
+
+  @Override
+  public String getJobType() {
+    return "tst_service_3";
   }
 }

@@ -16,6 +16,7 @@
 package com.github.zeebe.worker;
 
 import com.github.zeebe.worker.config.AppCfg;
+import com.github.zeebe.worker.services.*;
 import io.zeebe.client.ZeebeClient;
 import io.zeebe.client.api.worker.JobWorker;
 import java.util.*;

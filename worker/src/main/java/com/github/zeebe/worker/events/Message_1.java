@@ -13,32 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.zeebe.worker;
+package com.github.zeebe.worker.events;
 
 import com.github.zeebe.worker.config.AppCfg;
-import io.zeebe.client.api.response.ActivatedJob;
-import io.zeebe.client.api.worker.JobClient;
-import lombok.Getter;
+import io.zeebe.client.ZeebeClient;
 
-public final class Service_2 extends AbstractService {
+public class Message_1 extends AbstractEvent {
 
-  static final long completionDelay = 300;
-
-  @Getter public final String jobType = "tst_service_2";
-  @Getter public final Integer numThread = 3;
-
-  protected Service_2(AppCfg appCfg) {
-    super(appCfg);
+  public Message_1(AppCfg appCfg, ZeebeClient client) {
+    super(appCfg, client);
   }
 
   @Override
-  public void handle(JobClient jobClient, ActivatedJob job) throws Exception {
-    try {
-      Thread.sleep(completionDelay);
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-
-    jobClient.newCompleteCommand(job.getKey()).variables(job.getVariables()).send();
+  protected String getMessageName() {
+    return "msg_1";
   }
 }

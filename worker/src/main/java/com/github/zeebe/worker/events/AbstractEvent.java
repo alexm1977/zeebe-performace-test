@@ -13,36 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.zeebe.worker;
+package com.github.zeebe.worker.events;
 
 import com.github.zeebe.worker.config.AppCfg;
 import io.zeebe.client.ZeebeClient;
-import io.zeebe.client.api.response.ActivatedJob;
-import io.zeebe.client.api.worker.*;
 
-public abstract class AbstractService implements JobHandler {
-
+public abstract class AbstractEvent {
   protected final AppCfg appCfg;
   protected final ZeebeClient client;
 
-  protected AbstractService(AppCfg appCfg) {
+  protected AbstractEvent(AppCfg appCfg, ZeebeClient client) {
     this.appCfg = appCfg;
-    this.client =
-        ZeebeClient.newClientBuilder()
-            .brokerContactPoint(appCfg.getBrokerUrl())
-            .numJobWorkerExecutionThreads(getNumThread())
-            .withProperties(System.getProperties())
-            .build();
+    this.client = client;
   }
 
-  public JobWorker create() {
-    return this.client.newWorker().jobType(getJobType()).handler(this).open();
+  public void createEvent(String correlationKey) {
+    EventVariables variables = new EventVariables();
+    variables.setEvent(getMessageName());
+    client
+        .newPublishMessageCommand()
+        .messageName(getMessageName())
+        .correlationKey(correlationKey)
+        .variables(variables)
+        .send();
   }
 
-  public abstract Integer getNumThread();
-
-  public abstract String getJobType();
-
-  @Override
-  public abstract void handle(JobClient client, ActivatedJob job) throws Exception;
+  protected abstract String getMessageName();
 }
